@@ -1152,6 +1152,9 @@ namespace Souvenir
         public override IEnumerable<string> DebugAnswers { get { return _answers; } }
         public override double DesiredHeightFactor { get { return 1.1; } }
 
+        private static double[][] width4 = new[] { new[] { 0, 0.6 } };
+        private static double[][] width6 = new[] { new[] { 0, 0.4 } };
+
         public override void SetAnswers(SouvenirModule souvenir)
         {
             SetupAnswers(souvenir, _answers.Length > 4 ? 13.125f : 19.375f, 6.25f);
@@ -1162,6 +1165,7 @@ namespace Souvenir
 
                 mesh.text = i < _answers.Length ? _answers[i] : "•";
                 mesh.font = _font;
+                mesh.fontSize = 48;
                 mesh.GetComponent<MeshRenderer>().material = _fontMaterial;
                 mesh.GetComponent<MeshRenderer>().material.mainTexture = _fontTexture;
 
@@ -1171,8 +1175,11 @@ namespace Souvenir
                 mesh.transform.localScale = new Vector3(1, 1, 1);
                 var bounds = mesh.GetComponent<Renderer>().bounds.size;
                 var fac = (_answers.Length > 4 ? .45 : .7) * souvenir.SurfaceSizeFactor;
-                if (bounds.x > fac)
-                    mesh.transform.localScale = new Vector3((float) (fac / bounds.x), 1, 1);
+                var x = (float) (fac / bounds.x);
+                if (x < 0.6f)
+                    souvenir.SetWordWrappedText(mesh, mesh.text, 0.3, _answers.Length > 4 ? width6 : width4, 1, 96);
+                else if (bounds.x > fac)
+                    mesh.transform.localScale = new Vector3(x, 1, 1);
                 mesh.transform.localRotation = origRotation;
             }
         }

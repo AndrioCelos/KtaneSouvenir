@@ -984,22 +984,25 @@ public class SouvenirModule : MonoBehaviour
         new[] { 0.834 - 0.391, 0.834 + 0.834 }
     );
 
-    private void SetWordWrappedText(string text, double desiredHeightFactor)
+    internal void SetWordWrappedText(string text, double desiredHeightFactor)
     {
-        var low = 1;
-        var high = 256;
+        SetWordWrappedText(TextMesh, text, desiredHeightFactor, _acceptableWidths, 1, 256);
+    }
+    internal void SetWordWrappedText(TextMesh textMesh, string text, double desiredHeightFactor, double[][] widths, int low, int high)
+    {
+        var textRenderer = textMesh.GetComponent<Renderer>();
         var desiredHeight = desiredHeightFactor * SurfaceSizeFactor;
         var wrappeds = new Dictionary<int, string>();
-        var origRotation = TextMesh.transform.rotation;
-        TextMesh.transform.eulerAngles = new Vector3(90, 0, 0);
+        var origRotation = textMesh.transform.rotation;
+        textMesh.transform.eulerAngles = new Vector3(90, 0, 0);
 
         while (high - low > 1)
         {
             var mid = (low + high) / 2;
-            TextMesh.fontSize = mid;
+            textMesh.fontSize = mid;
 
-            TextMesh.text = "\u00a0";
-            var size = TextRenderer.bounds.size;
+            textMesh.text = "\u00a0";
+            var size = textRenderer.bounds.size;
             var widthOfASpace = size.x;
             var heightOfALine = size.z;
             var wrapWidths = new List<double>();
@@ -1016,14 +1019,14 @@ public class SouvenirModule : MonoBehaviour
                     while (wrapWidths.Count < line)
                         wrapWidths.Add(0);
                     var i = 1;
-                    while (i < _acceptableWidths.Length && _acceptableWidths[i][0] < y)
+                    while (i < widths.Length && widths[i][0] < y)
                         i++;
-                    if (i == _acceptableWidths.Length)
-                        wrapWidths.Add(_acceptableWidths[i - 1][1] * SurfaceSizeFactor);
+                    if (i == widths.Length)
+                        wrapWidths.Add(widths[i - 1][1] * SurfaceSizeFactor);
                     else
                     {
-                        var lambda = (y - _acceptableWidths[i - 1][0]) / (_acceptableWidths[i][0] - _acceptableWidths[i - 1][0]);
-                        wrapWidths.Add((_acceptableWidths[i - 1][1] * (1 - lambda) + _acceptableWidths[i][1] * lambda) * SurfaceSizeFactor);
+                        var lambda = (y - widths[i - 1][0]) / (widths[i][0] - widths[i - 1][0]);
+                        wrapWidths.Add((widths[i - 1][1] * (1 - lambda) + widths[i][1] * lambda) * SurfaceSizeFactor);
                     }
 
                     return wrapWidths[line];
@@ -1031,8 +1034,8 @@ public class SouvenirModule : MonoBehaviour
                 widthOfASpace,
                 str =>
                 {
-                    TextMesh.text = str;
-                    return TextRenderer.bounds.size.x;
+                    textMesh.text = str;
+                    return textRenderer.bounds.size.x;
                 },
                 allowBreakingWordsApart: false
             ))
@@ -1054,8 +1057,8 @@ public class SouvenirModule : MonoBehaviour
             {
                 var wrapped = wrappedSB.ToString();
                 wrappeds[mid] = wrapped;
-                TextMesh.text = wrapped;
-                size = TextRenderer.bounds.size;
+                textMesh.text = wrapped;
+                size = textRenderer.bounds.size;
                 if (size.z > desiredHeight)
                     high = mid;
                 else
@@ -1063,10 +1066,10 @@ public class SouvenirModule : MonoBehaviour
             }
         }
 
-        TextMesh.fontSize = low;
-        TextMesh.text = wrappeds[low];
-        TextMesh.transform.rotation = origRotation;
-        TextMesh.gameObject.SetActive(true);
+        textMesh.fontSize = low;
+        textMesh.text = wrappeds[low];
+        textMesh.transform.rotation = origRotation;
+        textMesh.gameObject.SetActive(true);
     }
 
     sealed class FieldInfo<T>

@@ -424,6 +424,18 @@ namespace Souvenir
                 {
                     // Discover the extent of the spaces.
                     numSpaces = 0;
+
+                    // If we are looking at a non-whitespace breaking character (e.g. hyphen), render it.
+                    if (!char.IsWhiteSpace(text[i]))
+                    {
+                        var width = measure(text[i].ToString());
+                        wordPieces.Add(text[i].ToString());
+                        wordPiecesWidths.Add(width);
+                        wordPiecesWidthsSum += width;
+                        renderPieces();
+                        i++;
+                    }
+
                     while (numSpaces + i < text.Length && isWrappableAfter(text, numSpaces + i) && text[numSpaces + i] != '\n')
                         numSpaces++;
                     i += numSpaces;
@@ -443,23 +455,21 @@ namespace Souvenir
 
         private static bool isWrappableAfter(string txt, int index)
         {
-            // Return false for all the whitespace characters that should NOT be wrappable
             switch (txt[index])
             {
+                // Return false for all the whitespace characters that should NOT be wrappable
                 case '\u00a0':   // NO-BREAK SPACE
                 case '\u202f':    // NARROW NO-BREAK SPACE
                     return false;
-            }
-
-            // Return true for all the NON-whitespace characters that SHOULD be wrappable
-            switch (txt[index])
-            {
+                // Return true for all the NON-whitespace characters that SHOULD be wrappable
                 case '\u200b':   // ZERO WIDTH SPACE
+                case '-':
                     return true;
+                // Apart from the above exceptions, wrap at whitespace characters.
+                default:
+                    return char.IsWhiteSpace(txt, index);
             }
 
-            // Apart from the above exceptions, wrap at whitespace characters.
-            return char.IsWhiteSpace(txt, index);
         }
 
         public static int IndexOf<T>(this IEnumerable<T> source, Func<T, bool> predicate)
